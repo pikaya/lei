@@ -1,1 +1,156 @@
-hello world
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - io - OBJ converter</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background:#ffffff;
+				padding:0;
+				margin:0;
+				overflow:hidden;
+				font-family:georgia;
+				text-align:center;
+			}
+			
+		</style>
+	</head>
+
+	<body>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/OBJMTLLoader.js"></script>
+		<script src="js/stats.min.js"></script>
+		
+		<script>
+
+			var SCREEN_WIDTH = window.innerWidth;
+			var SCREEN_HEIGHT = window.innerHeight;
+			var FLOOR = -250;
+			var controls;
+			var container,stats;
+
+			var camera, scene;
+			var canvasRenderer, webglRenderer;
+
+			var mesh, zmesh, geometry;
+
+			var mouseX = 0, mouseY = 0;
+
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+
+			var render_gl= 1;
+			var has_gl = 0;
+
+			var texture;
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 75, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 100000 );
+				camera.position.z = 500;
+
+				scene = new THREE.Scene();
+				//CONTROLS
+				controls = new THREE.OrbitControls( camera );
+				controls.addEventListener( 'change', render );
+				
+				// LIGHTS
+				var ambient = new THREE.AmbientLight( 0xffffff );
+				scene.add( ambient );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff );
+				directionalLight.position.set( 0, 0, 100 ).normalize();
+				scene.add( directionalLight );
+				var directionalLight = new THREE.DirectionalLight( 0xffffff );
+				directionalLight.position.set( 0, 0, -100 ).normalize();
+				scene.add( directionalLight );
+
+				// RENDERER
+
+				if ( render_gl ) {
+
+					try {
+
+						webglRenderer = new THREE.WebGLRenderer();
+						webglRenderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+						webglRenderer.domElement.style.position = "relative";
+
+						container.appendChild( webglRenderer.domElement );
+
+						has_gl = 1;
+
+					}
+					catch (e) {
+					}
+
+				}
+
+				// STATS
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				stats.domElement.style.zIndex = 100;
+				container.appendChild( stats.domElement );
+
+				//
+				texture = THREE.ImageUtils.loadCompressedTexture("models/monster_2008.dds");
+
+				var loader = new THREE.JSONLoader();
+				var callbackMale = function ( geometry, materials ) {
+					//zmesh = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( materials ) );
+					zmesh = new THREE.Mesh(geometry , new THREE.MeshBasicMaterial({map : texture}));
+					zmesh.position.set( 0, 0, 0 );
+					zmesh.scale.set( 3, 3, 3 );
+					zmesh.rotation.set(0 , Math.PI/2 ,0);
+					scene.add( zmesh );
+					
+				};
+				
+				loader.load( "models/sheep.js", callbackMale ); //mm01.js  yang.js  Male02_dds.js sheep.js
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				if ( webglRenderer ) webglRenderer.setSize( window.innerWidth, window.innerHeight );
+				//if ( canvasRenderer ) canvasRenderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				controls.update();
+				stats.update();
+
+			}
+
+			function render() {
+				if ( render_gl && has_gl ) webglRenderer.render( scene, camera );
+			}
+
+			
+		</script>
+
+	</body>
+</html>
