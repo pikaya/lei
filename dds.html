@@ -103,12 +103,12 @@
 				container.appendChild( stats.domElement );
 
 				//
-				texture = THREE.ImageUtils.loadCompressedTexture("models/monster_2008.dds");
+				//texture = THREE.ImageUtils.loadCompressedTexture("models/monster_2008.dds");
 
 				var loader = new THREE.JSONLoader();
 				var callbackMale = function ( geometry, materials ) {
-					//zmesh = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( materials ) );
-					zmesh = new THREE.Mesh(geometry , new THREE.MeshBasicMaterial({map : texture}));
+					zmesh = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( materials ) );
+					//zmesh = new THREE.Mesh(geometry , new THREE.MeshBasicMaterial({map : texture}));
 					zmesh.position.set( 0, 0, 0 );
 					zmesh.scale.set( 3, 3, 3 );
 					zmesh.rotation.set(0 , Math.PI/2 ,0);

@@ -23,9 +23,9 @@
 	"colorDiffuse" : [0.588, 0.588, 0.588],
 	"colorSpecular" : [0.0, 0.0, 0.0],
 	"illumination" : 2,
-	"mapAlpha" : "monster_2008.dds",
-	"mapAmbient" : "monster_2008.dds",
-	"mapDiffuse" : "monster_2008.dds",
+	//"mapAlpha" : "monster_2008.dds",
+	//"mapAmbient" : "monster_2008.dds",
+	//"mapDiffuse" : "monster_2008.dds",
 	"opticalDensity" : 1.5,
 	"specularCoef" : 10.0,
 	"transparency" : 0.0
