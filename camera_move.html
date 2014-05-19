@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - shapes</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/CurveExtras.js"></script>
+
+		<script src="js/stats.min.js"></script>
+
+
+		<script>
+		var container, stats;
+
+		var camera, scene, renderer, splineCamera, cameraHelper, cameraEye;
+
+		var text, plane;
+
+		var targetRotation = 0;
+		var targetRotationOnMouseDown = 0;
+
+		var mouseX = 0;
+		var mouseXOnMouseDown = 0;
+
+		var windowHalfX = window.innerWidth / 2;
+		var windowHalfY = window.innerHeight / 2;
+
+		var binormal = new THREE.Vector3();
+		var normal = new THREE.Vector3();
+
+		var sampleClosedSpline = new THREE.ClosedSplineCurve3([
+			/*new THREE.Vector3(0, -40, -40),
+			new THREE.Vector3(0, 40, -40),
+			new THREE.Vector3(0, 140, -40),
+			new THREE.Vector3(0, 40, 40),
+			new THREE.Vector3(0, -40, 40),*/
+			
+			new THREE.Vector3(120, 0, 60),
+			new THREE.Vector3(70, 0, -60),
+			new THREE.Vector3(50,0,40),
+
+			new THREE.Vector3(-50, 0,40),
+			new THREE.Vector3(-70, 0,-60),
+			new THREE.Vector3(-120, 0,40),
+		]);
+		var splines = {
+			SampleClosedSpline: sampleClosedSpline
+		};
+
+
+
+
+		extrudePath = new THREE.Curves.TrefoilKnot();
+
+		var closed2 = true;
+		var debug = true;
+		var parent;
+		var tube, tubeMesh;
+		var animation = false, lookAhead = false;
+		var scale;
+		var showCameraHelper = false;
+
+		function addTube() {
+
+			var segments = 200;
+			closed2 = false;
+			debug = false;
+
+			var radiusSegments = 3;
+
+			if (tubeMesh) parent.remove(tubeMesh);
+
+			extrudePath = splines.SampleClosedSpline;
+
+			tube = new THREE.TubeGeometry(extrudePath, segments, 2, radiusSegments, closed2, debug);
+
+			addGeometry(tube, 0xff00ff);
+			setScale();
+
+		}
+
+		function setScale() {
+
+			scale = 2;
+			tubeMesh.scale.set( scale, scale, scale );
+
+		}
+
+
+		function addGeometry( geometry, color ) {
+
+			// 3d shape
+
+			tubeMesh = THREE.SceneUtils.createMultiMaterialObject( geometry, [
+				new THREE.MeshLambertMaterial({
+					color: color,
+					transparent: true
+				}),
+				new THREE.MeshBasicMaterial({
+					color: 0x000000,
+					opacity: 0.3,
+					wireframe: true,
+					transparent: true
+			})]);
+
+			if ( geometry.debug ) tubeMesh.add( geometry.debug );
+
+			parent.add( tubeMesh );
+
+		}
+
+		function animateCamera( toggle ) {
+
+			if ( toggle ) {
+
+				animation = animation === false;
+				document.getElementById('animation').value = 'Camera Spline Animation View: ' + (animation? 'ON': 'OFF');
+
+			}
+
+			lookAhead = document.getElementById('lookAhead').checked;
+
+			showCameraHelper = document.getElementById('cameraHelper').checked;
+
+			cameraHelper.visible = showCameraHelper;
+			cameraEye.visible = showCameraHelper;
+		}
+
+
+		init();
+		animate();
+
+		function init() {
+
+			container = document.createElement('div');
+			document.body.appendChild(container);
+
+			var info = document.createElement('div');
+			info.style.position = 'absolute';
+			info.style.top = '10px';
+			info.style.width = '100%';
+			info.style.textAlign = 'center';
+
+			info.innerHTML += '<br/><br/><input id="animation" type="button" onclick="animateCamera(true)" value="Camera Spline Animation View: OFF"/><br/> Look Ahead <input id="lookAhead" type="checkbox" onchange="animateCamera()" /> Camera Helper <input id="cameraHelper" type="checkbox" onchange="animateCamera()" />';
+
+			container.appendChild(info);
+
+			//
+
+			camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.01, 50000);
+			camera.position.set(0,150,300);
+
+			scene = new THREE.Scene();
+
+			var light = new THREE.DirectionalLight( 0xffffff );
+			light.position.set( 0, 0, 1 );
+			scene.add( light );
+			
+			var	materialArray =	[];
+			materialArray.push(new THREE.MeshBasicMaterial(	{ map: THREE.ImageUtils.loadTexture( "images/px.jpg" ) }));
+			materialArray.push(new THREE.MeshBasicMaterial(	{ map: THREE.ImageUtils.loadTexture( "images/nx.jpg" ) }));
+			materialArray.push(new THREE.MeshBasicMaterial(	{ map: THREE.ImageUtils.loadTexture( "images/py.jpg" ) }));
+			materialArray.push(new THREE.MeshBasicMaterial(	{ map: THREE.ImageUtils.loadTexture( "images/ny.jpg" ) }));
+			materialArray.push(new THREE.MeshBasicMaterial(	{ map: THREE.ImageUtils.loadTexture( "images/pz.jpg" ) }));
+			materialArray.push(new THREE.MeshBasicMaterial(	{ map: THREE.ImageUtils.loadTexture( "images/nz.jpg" ) }));
+			for	(var i = 0;	i <	6; i++){
+			   materialArray[i].side = THREE.BackSide;
+			}
+			var	skyboxMaterial = new THREE.MeshFaceMaterial( materialArray );
+			var	skyboxGeom = new THREE.CubeGeometry( 1000,1000,1000, 1,	3, 1 );
+			var	skybox = new THREE.Mesh( skyboxGeom, skyboxMaterial	);
+			scene.add( skybox );
+
+
+			parent = new THREE.Object3D();
+			parent.position.y = 100;
+			scene.add( parent );
+
+			splineCamera = new THREE.PerspectiveCamera( 84, window.innerWidth / window.innerHeight, 0.01, 1000 );
+			parent.add( splineCamera );
+
+			cameraHelper = new THREE.CameraHelper( splineCamera );
+			scene.add( cameraHelper );
+
+			addTube();
+
+			// Debug point
+
+			cameraEye = new THREE.Mesh( new THREE.SphereGeometry( 5 ), new THREE.MeshBasicMaterial( { color: 0xdddddd } ) );
+			parent.add( cameraEye );
+			
+			var abc = new THREE.Mesh(new THREE.CylinderGeometry( 40,80, 100, 32 ), new THREE.MeshBasicMaterial( { color: 0xff00ff } ) );
+			
+			parent.add( abc );
+
+
+			cameraHelper.visible = showCameraHelper;
+			cameraEye.visible = showCameraHelper;
+			parent.visible = showCameraHelper;
+			tubeMesh.visible = showCameraHelper;
+			
+			//
+
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setClearColor( 0xf0f0f0 );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+			container.appendChild( renderer.domElement );
+
+			stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			container.appendChild( stats.domElement );
+
+			renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+			renderer.domElement.addEventListener( 'touchstart', onDocumentTouchStart, false );
+			renderer.domElement.addEventListener( 'touchmove', onDocumentTouchMove, false );
+
+			//
+
+			window.addEventListener( 'resize', onWindowResize, false );
+
+		}
+
+		function onWindowResize() {
+
+			windowHalfX = window.innerWidth / 2;
+			windowHalfY = window.innerHeight / 2;
+
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+		}
+
+		//
+
+		function onDocumentMouseDown(event) {
+
+			event.preventDefault();
+
+			renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+			renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
+			renderer.domElement.addEventListener( 'mouseout', onDocumentMouseOut, false );
+
+			mouseXOnMouseDown = event.clientX - windowHalfX;
+			targetRotationOnMouseDown = targetRotation;
+
+		}
+
+		function onDocumentMouseMove(event) {
+
+			mouseX = event.clientX - windowHalfX;
+
+			targetRotation = targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.02;
+
+		}
+
+		function onDocumentMouseUp(event) {
+
+			renderer.domElement.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+			renderer.domElement.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+			renderer.domElement.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+
+		}
+
+		function onDocumentMouseOut(event) {
+
+			renderer.domElement.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+			renderer.domElement.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+			renderer.domElement.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+
+		}
+
+		function onDocumentTouchStart(event) {
+
+			if (event.touches.length == 1) {
+
+				event.preventDefault();
+
+				mouseXOnMouseDown = event.touches[ 0 ].pageX - windowHalfX;
+				targetRotationOnMouseDown = targetRotation;
+
+			}
+
+		}
+
+		function onDocumentTouchMove(event) {
+
+			if (event.touches.length == 1) {
+
+				event.preventDefault();
+
+				mouseX = event.touches[ 0 ].pageX - windowHalfX;
+				targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.05;
+
+			}
+
+		}
+
+		//
+
+		function animate() {
+
+			requestAnimationFrame( animate );
+
+			render();
+			stats.update();
+
+		}
+
+		function render() {
+
+			// Try Animate Camera Along Spline
+			var time = Date.now();
+			var looptime = 20 * 1000;
+			var t = ( time % looptime ) / looptime;
+
+			var pos = tube.path.getPointAt( t );
+			pos.multiplyScalar( scale );
+
+			// interpolation
+			var segments = tube.tangents.length;
+			var pickt = t * segments;
+			var pick = Math.floor( pickt );
+			var pickNext = ( pick + 1 ) % segments;
+
+			binormal.subVectors( tube.binormals[ pickNext ], tube.binormals[ pick ] );
+			binormal.multiplyScalar( pickt - pick ).add( tube.binormals[ pick ] );
+
+
+			var dir = tube.path.getTangentAt( t );
+
+			var offset = 15;
+
+			normal.copy( binormal ).cross( dir );
+
+			// We move on a offset on its binormal
+			pos.add( normal.clone().multiplyScalar( offset ) );
+
+			splineCamera.position = pos;
+			cameraEye.position = pos;
+
+
+			// Camera Orientation 1 - default look at
+			// splineCamera.lookAt( lookAt );
+
+			// Using arclength for stablization in look ahead.
+			var lookAt = tube.path.getPointAt( ( t + 30 / tube.path.getLength() ) % 1 ).multiplyScalar( scale );
+
+			// Camera Orientation 2 - up orientation via normal
+			if (!lookAhead)
+			lookAt.copy( pos ).add( dir );
+			splineCamera.matrix.lookAt(splineCamera.position, lookAt, normal);
+			splineCamera.rotation.setFromRotationMatrix( splineCamera.matrix, splineCamera.rotation.order );
+
+			cameraHelper.update();
+
+			parent.rotation.y += ( targetRotation - parent.rotation.y ) * 0.05;
+
+			renderer.render( scene, animation === true ? splineCamera : camera );
+
+		}
+	</script>
+
+	</body>
+</html>
